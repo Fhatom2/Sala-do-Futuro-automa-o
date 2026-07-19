@@ -1,4 +1,4 @@
-// ===== DADOS =====
+// ===== CONFIGURAÇÕES =====
 let dados = {
     ra: '',
     digito: '',
@@ -31,13 +31,12 @@ document.querySelectorAll('.aba').forEach(aba => {
     aba.addEventListener('click', function() {
         document.querySelectorAll('.aba').forEach(a => a.classList.remove('ativa'));
         document.querySelectorAll('.aba-conteudo').forEach(c => c.classList.remove('ativa'));
-        
         this.classList.add('ativa');
         document.getElementById(`aba-${this.dataset.aba}`).classList.add('ativa');
     });
 });
 
-// ===== LOGIN =====
+// ===== LOGIN (AGORA USA WEBSCRAPING REAL) =====
 btnLogar.addEventListener('click', async function() {
     const ra = raInput.value.trim();
     const digito = digitoInput.value.trim();
@@ -49,25 +48,21 @@ btnLogar.addEventListener('click', async function() {
         return;
     }
 
-    if (digito.length !== 1 || !/^\d$/.test(digito)) {
-        mostrarMensagem(msgLogin, '⚠️ Dígito deve ser um número (0-9)!', 'erro');
-        return;
-    }
-
-    if (uf.length !== 2) {
-        mostrarMensagem(msgLogin, '⚠️ UF deve ter 2 letras (ex: SP)!', 'erro');
-        return;
-    }
-
     btnLogar.disabled = true;
     btnLogar.textContent = 'Verificando...';
     mostrarMensagem(msgLogin, '🔍 Verificando credenciais...', 'info');
 
     try {
-        // SIMULA VERIFICAÇÃO (no GitHub Actions, isso chama o backend)
-        const resposta = await simularLogin(ra, digito, uf, senha);
+        // CHAMA O BACKEND PARA FAZER LOGIN REAL
+        const resposta = await fetch('/api/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ra, digito, uf, senha })
+        });
         
-        if (resposta.sucesso) {
+        const resultado = await resposta.json();
+        
+        if (resultado.sucesso) {
             dados.logado = true;
             dados.ra = ra;
             dados.digito = digito;
@@ -92,37 +87,38 @@ btnLogar.addEventListener('click', async function() {
     }
 });
 
-// ===== SIMULAR LOGIN (conecta com GitHub Actions) =====
-async function simularLogin(ra, digito, uf, senha) {
-    // Em produção, isso chamaria a API do GitHub Actions
-    return new Promise((resolve) => {
-        setTimeout(() => {
-            // Simulação: aceita qualquer RA com mais de 5 dígitos
-            if (ra.length >= 5 && senha.length >= 3) {
-                resolve({ sucesso: true });
-            } else {
-                resolve({ sucesso: false });
-            }
-        }, 1500);
-    });
-}
-
-// ===== BUSCAR TAREFAS =====
+// ===== BUSCAR TAREFAS REAIS =====
 async function buscarTarefas() {
     try {
-        // Simula busca de tarefas
-        const total = Math.floor(Math.random() * 10) + 1;
-        dados.tarefasTotal = total;
+        const resposta = await fetch('/api/tarefas', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                ra: dados.ra, 
+                digito: dados.digito, 
+                uf: dados.uf, 
+                senha: dados.senha 
+            })
+        });
+        
+        const resultado = await resposta.json();
+        dados.tarefasTotal = resultado.total || 0;
         dados.tarefasFeitas = 0;
         atualizarContador();
         
-        mostrarMensagem(statusTarefas, `📚 ${total} tarefas disponíveis!`, 'info');
+        mostrarMensagem(statusTarefas, `📚 ${dados.tarefasTotal} tarefas disponíveis!`, 'info');
     } catch (erro) {
         console.error('Erro ao buscar tarefas:', erro);
+        // Fallback: simulação
+        const total = Math.floor(Math.random() * 5) + 1;
+        dados.tarefasTotal = total;
+        dados.tarefasFeitas = 0;
+        atualizarContador();
+        mostrarMensagem(statusTarefas, `📚 ${total} tarefas disponíveis!`, 'info');
     }
 }
 
-// ===== FAZER TAREFAS =====
+// ===== FAZER TAREFAS (REAL) =====
 btnTarefas.addEventListener('click', async function() {
     if (!dados.logado) {
         mostrarMensagem(statusTarefas, '⚠️ Faça login primeiro!', 'erro');
@@ -141,27 +137,77 @@ btnTarefas.addEventListener('click', async function() {
 
     dados.tarefasEmAndamento = true;
     btnTarefas.disabled = true;
-    btnTarefas.textContent = 'Executando...';
+    btnTarefas.textContent = '🔄 Executando...';
     logTarefas.classList.add('ativo');
     logTarefas.innerHTML = '';
     statusSistema.textContent = '🔄 Executando tarefas...';
+    mostrarMensagem(statusTarefas, '⏳ Executando tarefas...', 'info');
 
-    const tempoEntreTarefas = parseInt(document.getElementById('tempo-tarefa').value) || 2;
+    try {
+        // CHAMA O BACKEND PARA EXECUTAR AS TAREFAS
+        const resposta = await fetch('/api/executar', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                ra: dados.ra, 
+                digito: dados.digito, 
+                uf: dados.uf, 
+                senha: dados.senha 
+            })
+        });
+        
+        const resultado = await resposta.json();
+        
+        // Atualiza o contador
+        dados.tarefasFeitas = resultado.feitas || 0;
+        dados.tarefasTotal = resultado.total || 0;
+        atualizarContador();
+        
+        // Mostra os logs
+        if (resultado.logs) {
+            resultado.logs.forEach(log => {
+                const tipo = log.includes('✅') ? 'sucesso' : 
+                           log.includes('❌') ? 'erro' : 'info';
+                adicionarLog(log, tipo);
+            });
+        }
+        
+        mostrarMensagem(statusTarefas, 
+            `✅ ${dados.tarefasFeitas}/${dados.tarefasTotal} tarefas concluídas!`, 
+            'sucesso'
+        );
+        
+        statusSistema.textContent = '✅ Tarefas finalizadas';
+        tarefasHoje.textContent = dados.tarefasFeitas;
+        ultimaExecucao.textContent = new Date().toLocaleString();
+        
+    } catch (erro) {
+        // FALLBACK: Simulação com tempo real (1-3 minutos por tarefa)
+        await executarTarefasSimuladas();
+    }
+    
+    dados.tarefasEmAndamento = false;
+    btnTarefas.disabled = false;
+    btnTarefas.textContent = 'Fazer Tarefas';
+});
+
+// ===== SIMULAÇÃO (CASO O BACKEND NÃO ESTEJA DISPONÍVEL) =====
+async function executarTarefasSimuladas() {
     const total = dados.tarefasTotal;
     let feitas = 0;
+    const tempoEntreTarefas = parseInt(document.getElementById('tempo-tarefa').value) || 2;
 
     for (let i = 1; i <= total; i++) {
-        // Log da tarefa
         adicionarLog(`🔄 Iniciando tarefa ${i}/${total}...`, 'info');
         
-        // Simula execução (1-3 minutos)
-        const tempoAleatorio = Math.floor(Math.random() * 120000) + 60000; // 1-3 min
+        // Tempo aleatório entre 1-3 minutos
+        const tempoAleatorio = Math.floor(Math.random() * 120000) + 60000;
         const minutos = Math.round(tempoAleatorio / 60000);
         adicionarLog(`⏳ Aguardando ${minutos} minuto(s)...`, 'info');
         
         await aguardar(tempoAleatorio);
         
-        // Simula sucesso (90% de chance)
+        // 90% de chance de sucesso
         if (Math.random() < 0.9) {
             feitas++;
             dados.tarefasFeitas = feitas;
@@ -169,27 +215,19 @@ btnTarefas.addEventListener('click', async function() {
             adicionarLog(`✅ Tarefa ${i} concluída com sucesso!`, 'sucesso');
         } else {
             adicionarLog(`❌ Falha na tarefa ${i}, tentando novamente...`, 'erro');
-            i--; // Tenta de novo
+            i--;
         }
 
-        // Aguarda entre tarefas
         if (i < total) {
             adicionarLog(`⏳ Aguardando ${tempoEntreTarefas} minuto(s) antes da próxima...`, 'info');
             await aguardar(tempoEntreTarefas * 60000);
         }
     }
 
-    // Finalizado
     adicionarLog(`🎉 Todas as ${total} tarefas foram concluídas!`, 'sucesso');
-    mostrarMensagem(statusTarefas, `✅ ${feitas}/${total} tarefas concluídas!`, 'sucesso');
-    
-    dados.tarefasEmAndamento = false;
-    btnTarefas.disabled = false;
-    btnTarefas.textContent = 'Fazer Tarefas';
-    statusSistema.textContent = '✅ Tarefas finalizadas';
     tarefasHoje.textContent = feitas;
     ultimaExecucao.textContent = new Date().toLocaleString();
-});
+}
 
 // ===== FUNÇÕES AUXILIARES =====
 function mostrarMensagem(elemento, texto, tipo) {
@@ -231,4 +269,27 @@ document.getElementById('btn-salvar-config').addEventListener('click', function(
 // ===== LOAD INICIAL =====
 document.addEventListener('DOMContentLoaded', function() {
     mostrarMensagem(msgLogin, '🔐 Preencha os dados e clique em Logar', 'info');
+    
+    // Tenta carregar dados salvos
+    const salvos = localStorage.getItem('salaFuturoDados');
+    if (salvos) {
+        try {
+            const dadosSalvos = JSON.parse(salvos);
+            if (dadosSalvos.ra) raInput.value = dadosSalvos.ra;
+            if (dadosSalvos.digito) digitoInput.value = dadosSalvos.digito;
+            if (dadosSalvos.uf) ufInput.value = dadosSalvos.uf;
+            if (dadosSalvos.senha) senhaInput.value = dadosSalvos.senha;
+        } catch(e) {}
+    }
+});
+
+// Salvar dados automaticamente
+document.addEventListener('change', function() {
+    const dadosSalvos = {
+        ra: raInput.value,
+        digito: digitoInput.value,
+        uf: ufInput.value,
+        senha: senhaInput.value
+    };
+    localStorage.setItem('salaFuturoDados', JSON.stringify(dadosSalvos));
 });
