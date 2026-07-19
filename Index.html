@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sala do Futuro - Automação</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Sala do Futuro</h1>
+        <h2>Automação de Tarefas</h2>
+
+        <!-- ABAS -->
+        <div class="abas">
+            <button class="aba ativa" data-aba="login">Login</button>
+            <button class="aba" data-aba="tarefas">Tarefas</button>
+            <button class="aba" data-aba="status">Status</button>
+            <button class="aba" data-aba="config">Configurações</button>
+        </div>
+
+        <!-- CONTEÚDO DAS ABAS -->
+        <div class="conteudo">
+
+            <!-- ABA 1: LOGIN -->
+            <div id="aba-login" class="aba-conteudo ativa">
+                <h3>🔐 Login Estudante</h3>
+                
+                <div class="campo">
+                    <label>RA</label>
+                    <input type="text" id="ra" placeholder="Ex: 115986075">
+                </div>
+                
+                <div class="campo">
+                    <label>Dígito RA</label>
+                    <input type="text" id="digito" placeholder="Ex: 0" maxlength="1">
+                </div>
+                
+                <div class="campo">
+                    <label>UF</label>
+                    <input type="text" id="uf" placeholder="Ex: SP" maxlength="2">
+                </div>
+                
+                <div class="campo">
+                    <label>Senha</label>
+                    <input type="password" id="senha" placeholder="Digite sua senha">
+                </div>
+
+                <button id="btn-logar" class="botao-azul">Logar</button>
+                
+                <div id="mensagem-login" class="mensagem"></div>
+            </div>
+
+            <!-- ABA 2: TAREFAS -->
+            <div id="aba-tarefas" class="aba-conteudo">
+                <h3>📊 Minhas Tarefas</h3>
+                
+                <div class="contador">
+                    <span id="tarefas-feitas">0</span>
+                    <span>/</span>
+                    <span id="tarefas-total">0</span>
+                    <span>tarefas concluídas</span>
+                </div>
+
+                <button id="btn-fazer-tarefas" class="botao-azul" disabled>
+                    Fazer Tarefas
+                </button>
+                
+                <div id="status-tarefas" class="mensagem"></div>
+                <div id="log-tarefas" class="log"></div>
+            </div>
+
+            <!-- ABA 3: STATUS -->
+            <div id="aba-status" class="aba-conteudo">
+                <h3>📈 Status do Sistema</h3>
+                <div id="status-info">
+                    <p><strong>Última execução:</strong> <span id="ultima-execucao">Nunca</span></p>
+                    <p><strong>Status:</strong> <span id="status-sistema">Aguardando login</span></p>
+                    <p><strong>Tarefas hoje:</strong> <span id="tarefas-hoje">0</span></p>
+                </div>
+            </div>
+
+            <!-- ABA 4: CONFIGURAÇÕES -->
+            <div id="aba-config" class="aba-conteudo">
+                <h3>⚙️ Configurações</h3>
+                <div class="campo">
+                    <label>Tempo entre tarefas (minutos)</label>
+                    <input type="number" id="tempo-tarefa" value="2" min="1" max="5">
+                    <small>Entre 1 e 5 minutos</small>
+                </div>
+                <button id="btn-salvar-config" class="botao-azul">Salvar Configurações</button>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
