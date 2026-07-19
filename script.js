@@ -36,15 +36,26 @@ document.querySelectorAll('.aba').forEach(aba => {
     });
 });
 
-// ===== LOGIN (AGORA USA WEBSCRAPING REAL) =====
+// ===== LOGIN (SEM BACKEND) =====
 btnLogar.addEventListener('click', async function() {
     const ra = raInput.value.trim();
     const digito = digitoInput.value.trim();
     const uf = ufInput.value.trim().toUpperCase();
     const senha = senhaInput.value.trim();
 
+    // VALIDAÇÃO DOS CAMPOS
     if (!ra || !digito || !uf || !senha) {
         mostrarMensagem(msgLogin, '⚠️ Preencha todos os campos!', 'erro');
+        return;
+    }
+
+    if (digito.length !== 1 || !/^\d$/.test(digito)) {
+        mostrarMensagem(msgLogin, '⚠️ Dígito deve ser um número (0-9)!', 'erro');
+        return;
+    }
+
+    if (uf.length !== 2) {
+        mostrarMensagem(msgLogin, '⚠️ UF deve ter 2 letras (ex: SP)!', 'erro');
         return;
     }
 
@@ -53,16 +64,11 @@ btnLogar.addEventListener('click', async function() {
     mostrarMensagem(msgLogin, '🔍 Verificando credenciais...', 'info');
 
     try {
-        // CHAMA O BACKEND PARA FAZER LOGIN REAL
-        const resposta = await fetch('/api/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ra, digito, uf, senha })
-        });
+        // SIMULAÇÃO: espera 1.5 segundos e valida
+        await aguardar(1500);
         
-        const resultado = await resposta.json();
-        
-        if (resultado.sucesso) {
+        // VALIDAÇÃO SIMPLES: RA com 5+ dígitos e senha com 3+ caracteres
+        if (ra.length >= 5 && senha.length >= 3) {
             dados.logado = true;
             dados.ra = ra;
             dados.digito = digito;
@@ -73,52 +79,40 @@ btnLogar.addEventListener('click', async function() {
             btnTarefas.disabled = false;
             statusSistema.textContent = '✅ Logado com sucesso';
             
-            // Buscar tarefas disponíveis
+            // BUSCAR TAREFAS
             await buscarTarefas();
         } else {
             mostrarMensagem(msgLogin, '❌ Algo está errado! Verifique seus dados.', 'erro');
             statusSistema.textContent = '❌ Falha no login';
         }
     } catch (erro) {
-        mostrarMensagem(msgLogin, '❌ Erro ao conectar: ' + erro.message, 'erro');
+        mostrarMensagem(msgLogin, '❌ Erro: ' + erro.message, 'erro');
     } finally {
         btnLogar.disabled = false;
         btnLogar.textContent = 'Logar';
     }
 });
 
-// ===== BUSCAR TAREFAS REAIS =====
+// ===== BUSCAR TAREFAS =====
 async function buscarTarefas() {
     try {
-        const resposta = await fetch('/api/tarefas', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                ra: dados.ra, 
-                digito: dados.digito, 
-                uf: dados.uf, 
-                senha: dados.senha 
-            })
-        });
-        
-        const resultado = await resposta.json();
-        dados.tarefasTotal = resultado.total || 0;
-        dados.tarefasFeitas = 0;
-        atualizarContador();
-        
-        mostrarMensagem(statusTarefas, `📚 ${dados.tarefasTotal} tarefas disponíveis!`, 'info');
-    } catch (erro) {
-        console.error('Erro ao buscar tarefas:', erro);
-        // Fallback: simulação
-        const total = Math.floor(Math.random() * 5) + 1;
+        // SIMULAÇÃO: gera entre 1 e 8 tarefas
+        const total = Math.floor(Math.random() * 8) + 1;
         dados.tarefasTotal = total;
         dados.tarefasFeitas = 0;
         atualizarContador();
+        
         mostrarMensagem(statusTarefas, `📚 ${total} tarefas disponíveis!`, 'info');
+    } catch (erro) {
+        console.error('Erro ao buscar tarefas:', erro);
+        dados.tarefasTotal = 3;
+        dados.tarefasFeitas = 0;
+        atualizarContador();
+        mostrarMensagem(statusTarefas, '📚 3 tarefas disponíveis!', 'info');
     }
 }
 
-// ===== FAZER TAREFAS (REAL) =====
+// ===== FAZER TAREFAS =====
 btnTarefas.addEventListener('click', async function() {
     if (!dados.logado) {
         mostrarMensagem(statusTarefas, '⚠️ Faça login primeiro!', 'erro');
@@ -135,6 +129,7 @@ btnTarefas.addEventListener('click', async function() {
         return;
     }
 
+    // INICIA AS TAREFAS
     dados.tarefasEmAndamento = true;
     btnTarefas.disabled = true;
     btnTarefas.textContent = '🔄 Executando...';
@@ -143,64 +138,14 @@ btnTarefas.addEventListener('click', async function() {
     statusSistema.textContent = '🔄 Executando tarefas...';
     mostrarMensagem(statusTarefas, '⏳ Executando tarefas...', 'info');
 
-    try {
-        // CHAMA O BACKEND PARA EXECUTAR AS TAREFAS
-        const resposta = await fetch('/api/executar', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                ra: dados.ra, 
-                digito: dados.digito, 
-                uf: dados.uf, 
-                senha: dados.senha 
-            })
-        });
-        
-        const resultado = await resposta.json();
-        
-        // Atualiza o contador
-        dados.tarefasFeitas = resultado.feitas || 0;
-        dados.tarefasTotal = resultado.total || 0;
-        atualizarContador();
-        
-        // Mostra os logs
-        if (resultado.logs) {
-            resultado.logs.forEach(log => {
-                const tipo = log.includes('✅') ? 'sucesso' : 
-                           log.includes('❌') ? 'erro' : 'info';
-                adicionarLog(log, tipo);
-            });
-        }
-        
-        mostrarMensagem(statusTarefas, 
-            `✅ ${dados.tarefasFeitas}/${dados.tarefasTotal} tarefas concluídas!`, 
-            'sucesso'
-        );
-        
-        statusSistema.textContent = '✅ Tarefas finalizadas';
-        tarefasHoje.textContent = dados.tarefasFeitas;
-        ultimaExecucao.textContent = new Date().toLocaleString();
-        
-    } catch (erro) {
-        // FALLBACK: Simulação com tempo real (1-3 minutos por tarefa)
-        await executarTarefasSimuladas();
-    }
-    
-    dados.tarefasEmAndamento = false;
-    btnTarefas.disabled = false;
-    btnTarefas.textContent = 'Fazer Tarefas';
-});
-
-// ===== SIMULAÇÃO (CASO O BACKEND NÃO ESTEJA DISPONÍVEL) =====
-async function executarTarefasSimuladas() {
+    const tempoEntreTarefas = parseInt(document.getElementById('tempo-tarefa').value) || 2;
     const total = dados.tarefasTotal;
     let feitas = 0;
-    const tempoEntreTarefas = parseInt(document.getElementById('tempo-tarefa').value) || 2;
 
     for (let i = 1; i <= total; i++) {
         adicionarLog(`🔄 Iniciando tarefa ${i}/${total}...`, 'info');
         
-        // Tempo aleatório entre 1-3 minutos
+        // TEMPO REAL: 1 a 3 minutos (60.000 a 180.000 ms)
         const tempoAleatorio = Math.floor(Math.random() * 120000) + 60000;
         const minutos = Math.round(tempoAleatorio / 60000);
         adicionarLog(`⏳ Aguardando ${minutos} minuto(s)...`, 'info');
@@ -225,9 +170,15 @@ async function executarTarefasSimuladas() {
     }
 
     adicionarLog(`🎉 Todas as ${total} tarefas foram concluídas!`, 'sucesso');
+    mostrarMensagem(statusTarefas, `✅ ${feitas}/${total} tarefas concluídas!`, 'sucesso');
+    
+    dados.tarefasEmAndamento = false;
+    btnTarefas.disabled = false;
+    btnTarefas.textContent = 'Fazer Tarefas';
+    statusSistema.textContent = '✅ Tarefas finalizadas';
     tarefasHoje.textContent = feitas;
     ultimaExecucao.textContent = new Date().toLocaleString();
-}
+});
 
 // ===== FUNÇÕES AUXILIARES =====
 function mostrarMensagem(elemento, texto, tipo) {
@@ -266,11 +217,11 @@ document.getElementById('btn-salvar-config').addEventListener('click', function(
     }
 });
 
-// ===== LOAD INICIAL =====
+// ===== SALVAR DADOS LOCALMENTE =====
 document.addEventListener('DOMContentLoaded', function() {
     mostrarMensagem(msgLogin, '🔐 Preencha os dados e clique em Logar', 'info');
     
-    // Tenta carregar dados salvos
+    // Carregar dados salvos
     const salvos = localStorage.getItem('salaFuturoDados');
     if (salvos) {
         try {
