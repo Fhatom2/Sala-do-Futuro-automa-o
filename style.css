@@ -1,0 +1,270 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+}
+
+body {
+    background: #2c2c2c;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.container {
+    background: #4a4a4a;
+    max-width: 600px;
+    width: 100%;
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    color: #e0e0e0;
+}
+
+h1 {
+    text-align: center;
+    color: #ffffff;
+    font-size: 28px;
+    margin-bottom: 5px;
+}
+
+h2 {
+    text-align: center;
+    color: #b0b0b0;
+    font-size: 16px;
+    font-weight: normal;
+    margin-bottom: 25px;
+}
+
+/* ABAS */
+.abas {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 25px;
+    background: #3a3a3a;
+    padding: 5px;
+    border-radius: 10px;
+}
+
+.aba {
+    flex: 1;
+    padding: 10px;
+    background: transparent;
+    border: none;
+    color: #aaa;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all 0.3s;
+}
+
+.aba:hover {
+    background: #555;
+    color: #fff;
+}
+
+.aba.ativa {
+    background: #5a5a5a;
+    color: #fff;
+}
+
+/* CONTEÚDO */
+.aba-conteudo {
+    display: none;
+    animation: fade 0.3s;
+}
+
+.aba-conteudo.ativa {
+    display: block;
+}
+
+@keyframes fade {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+h3 {
+    color: #fff;
+    margin-bottom: 20px;
+    font-size: 20px;
+}
+
+/* CAMPOS */
+.campo {
+    margin-bottom: 15px;
+}
+
+.campo label {
+    display: block;
+    color: #ccc;
+    font-size: 14px;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.campo input {
+    width: 100%;
+    padding: 12px;
+    background: #3a3a3a;
+    border: 2px solid #555;
+    border-radius: 8px;
+    color: #fff;
+    font-size: 16px;
+    transition: border 0.3s;
+}
+
+.campo input:focus {
+    outline: none;
+    border-color: #666;
+}
+
+.campo small {
+    color: #888;
+    font-size: 12px;
+    display: block;
+    margin-top: 5px;
+}
+
+/* BOTÃO AZUL */
+.botao-azul {
+    width: 100%;
+    padding: 14px;
+    background: #0066cc;
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s;
+    margin-top: 10px;
+}
+
+.botao-azul:hover:not(:disabled) {
+    background: #0055aa;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,102,204,0.3);
+}
+
+.botao-azul:disabled {
+    background: #444;
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+/* CONTADOR */
+.contador {
+    text-align: center;
+    font-size: 32px;
+    font-weight: bold;
+    color: #fff;
+    padding: 20px;
+    background: #3a3a3a;
+    border-radius: 10px;
+    margin: 20px 0;
+}
+
+.contador span {
+    color: #0066cc;
+}
+
+.contador span:last-child {
+    font-size: 16px;
+    color: #aaa;
+    font-weight: normal;
+    margin-left: 5px;
+}
+
+/* MENSAGENS */
+.mensagem {
+    margin-top: 15px;
+    padding: 12px;
+    border-radius: 8px;
+    text-align: center;
+    font-weight: bold;
+    display: none;
+}
+
+.mensagem.sucesso {
+    display: block;
+    background: #1a5a1a;
+    color: #8f8;
+    border: 1px solid #2a8a2a;
+}
+
+.mensagem.erro {
+    display: block;
+    background: #5a1a1a;
+    color: #f88;
+    border: 1px solid #8a2a2a;
+}
+
+.mensagem.info {
+    display: block;
+    background: #1a3a5a;
+    color: #8cf;
+    border: 1px solid #2a5a8a;
+}
+
+/* LOG */
+.log {
+    margin-top: 15px;
+    max-height: 200px;
+    overflow-y: auto;
+    background: #333;
+    border-radius: 8px;
+    padding: 10px;
+    font-family: monospace;
+    font-size: 13px;
+    color: #aaa;
+    display: none;
+}
+
+.log.ativo {
+    display: block;
+}
+
+.log .linha {
+    padding: 4px 0;
+    border-bottom: 1px solid #444;
+}
+
+.log .linha:last-child {
+    border-bottom: none;
+}
+
+.log .sucesso { color: #8f8; }
+.log .erro { color: #f88; }
+.log .info { color: #8cf; }
+
+/* STATUS */
+#status-info p {
+    padding: 10px;
+    background: #3a3a3a;
+    border-radius: 8px;
+    margin: 10px 0;
+    color: #ccc;
+}
+
+#status-info strong {
+    color: #fff;
+}
+
+/* RESPONSIVO */
+@media (max-width: 500px) {
+    .container {
+        padding: 15px;
+    }
+    .aba {
+        font-size: 12px;
+        padding: 8px 5px;
+    }
+    .contador {
+        font-size: 24px;
+        padding: 15px;
+    }
+}
