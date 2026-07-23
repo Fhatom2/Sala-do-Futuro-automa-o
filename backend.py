@@ -1,5 +1,5 @@
 # ============================================
-# BACKEND - RECEBE DADOS DO FRONTEND
+# AUTOMAÇÃO SALA DO FUTURO - COM UF EM ROLAGEM
 # ============================================
 
 from selenium import webdriver
@@ -7,6 +7,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.support.ui import Select
 import time
 import json
 import sys
@@ -37,34 +38,51 @@ def fazer_tarefas(ra, digito, uf, senha):
         driver.set_page_load_timeout(30)
         
         # 1. Acessar o site
+        resultado['logs'].append('🌐 Acessando site...')
         driver.get('https://saladofuturo.educacao.sp.gov.br')
         time.sleep(3)
         
         # 2. Clicar em "Estudante"
+        resultado['logs'].append('👤 Selecionando perfil Estudante...')
         botao_estudante = WebDriverWait(driver, 20).until(
             EC.element_to_be_clickable((By.XPATH, "//a[contains(text(),'Estudante')]"))
         )
         botao_estudante.click()
         time.sleep(2)
         
-        # 3. Preencher dados (usando os que vieram do frontend)
+        # 3. Preencher RA
+        resultado['logs'].append('🔑 Preenchendo RA...')
         driver.find_element(By.ID, 'ra').send_keys(ra)
+        
+        # 4. Preencher Dígito RA
+        resultado['logs'].append('🔑 Preenchendo dígito...')
         driver.find_element(By.ID, 'digito').send_keys(digito)
-        driver.find_element(By.ID, 'uf').send_keys(uf)
+        
+        # 5. Selecionar UF (MENU SUSPENSO!)
+        resultado['logs'].append(f'📍 Selecionando UF: {uf}...')
+        uf_element = driver.find_element(By.ID, 'uf')  # ou o ID correto do select
+        select = Select(uf_element)
+        select.select_by_visible_text(uf)  # Seleciona pelo texto (ex: "SP")
+        # ou use select.select_by_value(uf) se for por valor
+        
+        # 6. Preencher Senha
+        resultado['logs'].append('🔑 Preenchendo senha...')
         driver.find_element(By.ID, 'senha').send_keys(senha)
         
-        # 4. Clicar em "Acessar"
+        # 7. Clicar em "Acessar"
+        resultado['logs'].append('🔄 Clicando em Acessar...')
         driver.find_element(By.XPATH, "//button[contains(text(),'Acessar')]").click()
         time.sleep(5)
         
-        # 5. Verificar login
+        # 8. Verificar login
         if "login" in driver.current_url.lower():
             resultado['logs'].append('❌ Falha no login! Verifique seus dados.')
             return resultado
         
         resultado['logs'].append('✅ Login realizado com sucesso!')
         
-        # 6. Navegar para "Tarefa SP"
+        # 9. Navegar para "Tarefa SP"
+        resultado['logs'].append('📚 Procurando Tarefa SP...')
         try:
             tarefa_sp = WebDriverWait(driver, 20).until(
                 EC.element_to_be_clickable((By.LINK_TEXT, "Tarefa SP"))
@@ -75,7 +93,9 @@ def fazer_tarefas(ra, digito, uf, senha):
             driver.find_element(By.XPATH, "//a[contains(@href, 'tarefa')]").click()
             time.sleep(3)
         
-        # 7. Filtrar "A Fazer"
+        resultado['logs'].append('✅ Entrou em Tarefa SP')
+        
+        # 10. Filtrar "A Fazer"
         try:
             a_fazer = WebDriverWait(driver, 20).until(
                 EC.element_to_be_clickable((By.XPATH, "//button[contains(text(),'A Fazer')]"))
@@ -85,7 +105,7 @@ def fazer_tarefas(ra, digito, uf, senha):
         except:
             pass
         
-        # 8. Encontrar tarefas
+        # 11. Encontrar tarefas
         tarefas = driver.find_elements(By.XPATH, "//div[contains(@class, 'tarefa')]")
         resultado['tarefas_total'] = len(tarefas)
         resultado['logs'].append(f'📚 Encontradas {len(tarefas)} tarefas')
@@ -95,7 +115,7 @@ def fazer_tarefas(ra, digito, uf, senha):
             resultado['logs'].append('🎉 Nenhuma tarefa pendente!')
             return resultado
         
-        # 9. Executar cada tarefa
+        # 12. Executar cada tarefa
         for i, tarefa in enumerate(tarefas, 1):
             try:
                 resultado['logs'].append(f'🔄 Processando tarefa {i}/{len(tarefas)}...')
@@ -123,6 +143,12 @@ def fazer_tarefas(ra, digito, uf, senha):
         
     except Exception as e:
         resultado['logs'].append(f'❌ ERRO: {str(e)}')
+        if driver:
+            try:
+                driver.save_screenshot('erro.png')
+                resultado['logs'].append('📸 Screenshot salva')
+            except:
+                pass
     
     finally:
         if driver:
@@ -130,7 +156,7 @@ def fazer_tarefas(ra, digito, uf, senha):
     
     return resultado
 
-# ===== EXECUTAR (recebe dados por linha de comando) =====
+# ===== EXECUTAR =====
 if __name__ == "__main__":
     if len(sys.argv) >= 5:
         ra = sys.argv[1]
